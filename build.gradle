@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.5.5'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'jacoco'
+    id 'org.flywaydb.flyway' version '6.4.3'
+}
+
+group = 'com.msreindustrias'
+java {
+    sourceCompatibility = '11'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    compileOnly 'org.projectlombok:lombok:1.18.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testCompileOnly 'org.projectlombok:lombok:1.18.12'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+
+    implementation 'io.swagger:swagger-annotations:1.6.2'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+
+    implementation 'javax.ws.rs:javax.ws.rs-api:2.1'
+    implementation 'org.glassfish.jersey.core:jersey-client:2.27'
+    implementation 'org.glassfish.jersey.inject:jersey-hk2:2.27'
+    implementation 'ca.pjer:logback-awslogs-appender:1.4.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
+    implementation 'io.lettuce:lettuce-core:5.3.3.RELEASE'
+    implementation 'org.springframework:spring-context-support:4.1.7.RELEASE'
+   // implementation 'org.flywaydb:flyway-core:6.4.3'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.0'
+    implementation 'io.github.resilience4j:resilience4j-reactor:1.7.0'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:2.4.5'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.4.5'
+    implementation 'org.springframework.boot:spring-boot-starter-aop:2.4.5'
+
+    implementation 'org.springframework.data:spring-data-jpa:2.5.5'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
+
+    implementation 'javax.persistence:javax.persistence-api:2.2'
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
