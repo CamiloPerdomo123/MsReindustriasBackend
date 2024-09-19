@@ -44,11 +44,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		    .and()
 		    .sessionManagement()
 		    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-		    .and();
-		    //.authorizeRequests().antMatchers(HttpMethod.GET, "/api/**").permitAll()
-		    //.antMatchers("/api/auth/**").permitAll()
-		    //.anyRequest()
-		    //.authenticated();
+		    .and()
+		    .authorizeRequests().antMatchers(HttpMethod.GET, "/api/**").permitAll()
+				.antMatchers("/api/auth/**").permitAll()
+				.antMatchers("/v2/api-docs/**").permitAll()
+				.antMatchers("/api/**").permitAll()
+				.antMatchers("/**").permitAll()
+		    .anyRequest()
+		    .authenticated();
 		http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 	}
 
