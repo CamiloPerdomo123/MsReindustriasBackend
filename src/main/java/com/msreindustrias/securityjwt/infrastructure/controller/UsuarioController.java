@@ -4,25 +4,40 @@ import com.msreindustrias.securityjwt.application.dto.in.DatosPersonalesRequestD
 import com.msreindustrias.securityjwt.application.dto.in.LoginRequestDto;
 import com.msreindustrias.securityjwt.application.dto.out.JWTAuthResponseDto;
 import com.msreindustrias.securityjwt.application.port.input.IUsuariosService;
+import com.msreindustrias.securityjwt.application.security.CustomUserDetailsService;
+import com.msreindustrias.securityjwt.application.security.JWTAuthResonseDTO;
+import com.msreindustrias.securityjwt.application.security.JwtTokenProvider;
 import com.msreindustrias.securityjwt.domain.entity.DatosPersonalesEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/auth")
 public class UsuarioController {
 
     @Autowired
     private IUsuariosService usuariosService;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
     @ApiOperation(value = "Endpoint que permite crear usuarios")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping(value = "v1/interno/usuario/registro")
@@ -38,7 +53,6 @@ public class UsuarioController {
 
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation(value = "Endpoint que permite listar los usuarios")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping(value = "v1/interno/usuario/list")
@@ -50,18 +64,16 @@ public class UsuarioController {
 
     }
 
-    @ApiOperation(value = "Endpoint que permite iniciar session")
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping(value = "v1/interno/api/auth/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginRequestDto loginRequestDto) {
-        try {
-            // Autenticar al usuario y generar el token
-            JWTAuthResponseDto response = authService.autenticacionUsuario(loginRequestDto);
+    @PostMapping("/iniciarSesion")
+    public ResponseEntity<JWTAuthResonseDTO> authenticateUser(@RequestBody LoginRequestDto loginDTO){
 
-            // Retornar el token si la autenticación fue exitosa
-            return ResponseEntity.ok(response);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(),HttpStatus.BAD_REQUEST);
-        }
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getUsernameOrEmail(), loginDTO.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        //obtenemos el token del jwtTokenProvider
+        String token = jwtTokenProvider.generarToken(authentication);
+
+        return ResponseEntity.ok(new JWTAuthResonseDTO(token));
     }
 }

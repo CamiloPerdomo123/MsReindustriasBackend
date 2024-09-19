@@ -8,7 +8,7 @@ plugins {
 
 group = 'com.msreindustrias'
 java {
-    sourceCompatibility = '11'
+    sourceCompatibility = '1.8'
 }
 
 repositories {
