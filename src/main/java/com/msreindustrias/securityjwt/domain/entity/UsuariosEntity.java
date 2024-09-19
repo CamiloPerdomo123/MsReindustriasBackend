@@ -9,7 +9,9 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -60,25 +62,7 @@ public class UsuariosEntity {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    public void genearPassword() {
-        String minusculas= "abcdefghijklmnopqrstuvwxyz";
-        String mayusculas="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String dijitos="0123456789";
-        String especiales="@#$%&?";
-        String passwordGenerado="";
-        for(int i=0; i<2; i++){
-            Random aleatorio= new Random();
-            int posmin= aleatorio.nextInt(minusculas.length());
-            int posmay=aleatorio.nextInt(mayusculas.length());
-            int posDigitos= aleatorio.nextInt(dijitos.length());
-            int posEspeciales= aleatorio.nextInt(especiales.length());
-
-            passwordGenerado+=minusculas.substring(posmin,posmin+1)+
-                    mayusculas.substring(posmay,posmay+1)+
-                    dijitos.substring(posDigitos,posDigitos+1)+
-                    especiales.substring(posEspeciales,posEspeciales+1);
-        }
-
-        this.password = passwordGenerado;
-    }
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "usuarios_roles", joinColumns = @JoinColumn(name = "usuario_id", referencedColumnName = "id_usuario"), inverseJoinColumns = @JoinColumn(name = "rol_id", referencedColumnName = "id_rol"))
+    private Set<RolEntity> roles = new HashSet<>();
 }

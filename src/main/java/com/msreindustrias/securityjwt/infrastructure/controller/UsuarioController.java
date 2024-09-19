@@ -1,17 +1,15 @@
 package com.msreindustrias.securityjwt.infrastructure.controller;
 
-import com.msreindustrias.securityjwt.application.ResourceNotFoundException;
 import com.msreindustrias.securityjwt.application.dto.in.DatosPersonalesRequestDto;
 import com.msreindustrias.securityjwt.application.dto.in.LoginRequestDto;
 import com.msreindustrias.securityjwt.application.dto.out.JWTAuthResponseDto;
-import com.msreindustrias.securityjwt.application.port.input.IJwtService;
 import com.msreindustrias.securityjwt.application.port.input.IUsuariosService;
 import com.msreindustrias.securityjwt.domain.entity.DatosPersonalesEntity;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -23,10 +21,8 @@ public class UsuarioController {
     @Autowired
     private IUsuariosService usuariosService;
 
-    @Autowired
-    private IJwtService authService;
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation(value = "Endpoint que permite crear usuarios")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping(value = "v1/interno/usuario/registro")
@@ -42,6 +38,7 @@ public class UsuarioController {
 
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation(value = "Endpoint que permite listar los usuarios")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping(value = "v1/interno/usuario/list")
