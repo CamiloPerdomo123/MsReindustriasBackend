@@ -1,20 +1,22 @@
 package com.msreindustrias.securityjwt.application;
 
+import com.msreindustrias.securityjwt.application.dto.in.ActualizarContrasenaDtoRequest;
 import com.msreindustrias.securityjwt.application.dto.in.DatosPersonalesRequestDto;
+import com.msreindustrias.securityjwt.application.dto.in.RecuperarPasswordRequestDto;
 import com.msreindustrias.securityjwt.application.port.input.IUsuariosService;
 import com.msreindustrias.securityjwt.domain.entity.DatosPersonalesEntity;
 import com.msreindustrias.securityjwt.domain.entity.UsuariosEntity;
 import com.msreindustrias.securityjwt.infrastructure.repository.IDatosPersonalesRepository;
 import com.msreindustrias.securityjwt.infrastructure.repository.IUsuarioRepository;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
+import java.util.Optional;
 
 @Service
 public class UsuariosService implements IUsuariosService {
@@ -27,6 +29,11 @@ public class UsuariosService implements IUsuariosService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    // Caracteres disponibles para generar la contraseña
+    private static final String CARACTERES = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final SecureRandom random = new SecureRandom();
+
     @Override
     public void guardarUsuario(DatosPersonalesRequestDto datosPersonalesRequestDto) {
 
@@ -45,9 +52,9 @@ public class UsuariosService implements IUsuariosService {
             if (datosPersonalesdb == null) {
 
                 if (existeUsuario) {
-                    throw new ResourceNotFoundException("El usuario ya existe");
+                    throw new ResourceNotFoundException("El usuario ya existe", HttpStatus.SC_BAD_REQUEST);
                 } else if (existeCorreo) {
-                    throw new ResourceNotFoundException("El correo ya existe");
+                    throw new ResourceNotFoundException("El correo ya existe", HttpStatus.SC_BAD_REQUEST);
                 }
 
                 datosPersonalesEntity = new DatosPersonalesEntity();
@@ -84,7 +91,7 @@ public class UsuariosService implements IUsuariosService {
 
     }
 
-    void guardarUsuarioPrivate(DatosPersonalesRequestDto datosPersonalesRequest){
+    void guardarUsuarioPrivate(DatosPersonalesRequestDto datosPersonalesRequest) {
 
         long idRol = guardarRol(datosPersonalesRequest);
         long idUsuario = 0;
@@ -95,7 +102,7 @@ public class UsuariosService implements IUsuariosService {
         UsuariosEntity usuariosEntityUpd = new UsuariosEntity();
 
 
-        if(!existeUsuario) {
+        if (!existeUsuario) {
             UsuariosEntity usuariosEntity = null;
             usuariosEntity = new UsuariosEntity();
 
@@ -112,7 +119,7 @@ public class UsuariosService implements IUsuariosService {
             usuariosEntity.setFechaActualizacion(LocalDateTime.now());
 
             usuarioRepository.save(usuariosEntity);
-        }else {
+        } else {
 
             idUsuario = usuariosdb.getIdUsuarios();
             LocalDateTime fechaCreacion = usuariosdb.getFechaCreacion();
@@ -130,10 +137,10 @@ public class UsuariosService implements IUsuariosService {
         }
     }
 
-    public long guardarRol(DatosPersonalesRequestDto datosPersonalesRequestDto){
+    public long guardarRol(DatosPersonalesRequestDto datosPersonalesRequestDto) {
         long idRol = 0;
-        if(datosPersonalesRequestDto.getRol() != null){
-            if(datosPersonalesRequestDto.getRol().equals("ADMIN")){
+        if (datosPersonalesRequestDto.getRol() != null) {
+            if (datosPersonalesRequestDto.getRol().equals("ADMIN")) {
                 idRol = 1;
             } else if (datosPersonalesRequestDto.getRol().equals("EMPLEADO")) {
                 idRol = 2;
@@ -164,4 +171,71 @@ public class UsuariosService implements IUsuariosService {
     public void actualizarUsuario(DatosPersonalesRequestDto datosPersonalesRequestDto) {
 
     }
+
+    @Override
+    public void actualizarContrasena(ActualizarContrasenaDtoRequest actualizarContrasena) {
+
+        Optional<UsuariosEntity> usuarios = usuarioRepository.findByUsuarioOrCorreo(actualizarContrasena.getUsuario(), actualizarContrasena.getCorreo());
+
+        if (usuarios.isPresent()) {
+            boolean contra = verificarContrasena(actualizarContrasena, usuarios.get());
+
+            if (contra) {
+                UsuariosEntity usuariosEntity = usuarios.get(); // Obtener la entidad existente
+                usuariosEntity.setPassword(passwordEncoder.encode(actualizarContrasena.getContrasenaNueva()));
+                usuariosEntity.setFechaActualizacion(LocalDateTime.now());
+
+                usuarioRepository.save(usuariosEntity);
+            } else {
+                throw new ResourceNotFoundException("Contraseña no coincide", HttpStatus.SC_BAD_REQUEST);
+            }
+
+        } else {
+            throw new ResourceNotFoundException("El usuario o correo no existe", HttpStatus.SC_BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public void recuperarContrasena(RecuperarPasswordRequestDto recuperarPassword) {
+
+        Optional<UsuariosEntity> usuarios = usuarioRepository.findByUsuarioOrCorreo(recuperarPassword.getUsuario(), recuperarPassword.getCorreo());
+
+        if(usuarios.isPresent()){
+
+            String nuevaContrasena = generarContrasena();
+            System.out.println("recuperarContraseña: " + nuevaContrasena);
+
+            UsuariosEntity usuariosEntity = usuarios.get(); // Obtener la entidad existente
+            usuariosEntity.setPassword(passwordEncoder.encode(nuevaContrasena));
+            usuariosEntity.setFechaActualizacion(LocalDateTime.now());
+
+            usuarioRepository.save(usuariosEntity);
+        } else {
+            throw new ResourceNotFoundException("El usuario o correo no existe", HttpStatus.SC_BAD_REQUEST);
+        }
+    }
+
+    public boolean verificarContrasena(ActualizarContrasenaDtoRequest actualizarContrasena, UsuariosEntity usuarios) {
+
+        boolean contrasena = passwordEncoder.matches(actualizarContrasena.getContrasenaVieja(), usuarios.getPassword());
+
+        if (contrasena) {
+            System.out.println("VerificarContraseña: " + contrasena);
+            return true;
+        }
+        return false;
+    }
+
+    // Método para generar una contraseña alfanumérica
+    public static String generarContrasena() {
+        StringBuilder sb = new StringBuilder(12);
+
+        for (int i = 0; i < 12; i++) {
+            int indice = random.nextInt(CARACTERES.length());
+            sb.append(CARACTERES.charAt(indice));
+        }
+
+        return sb.toString();
+    }
+
 }
